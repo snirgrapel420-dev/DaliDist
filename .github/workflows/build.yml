@@ -18,16 +18,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Locate project
+      - name: Locate project files
         shell: bash
         run: |
+          # אם CMakeLists.txt לא בתיקייה הראשית, חפש איפה הוא נמצא והעבר את התוכן של התיקייה ההיא למעלה
           if [ ! -f CMakeLists.txt ]; then
-            SUBDIR=$(find . -maxdepth 2 -name "CMakeLists.txt" -not -path "./CMakeLists.txt" | head -n 1 | cut -d'/' -f2)
-            if [ -n "$SUBDIR" ]; then
-              echo "Moving files from subfolder: $SUBDIR"
-              shopt -s dotglob; mv "$SUBDIR"/* .;
+            CMAKEDIR=$(find . -maxdepth 3 -name "CMakeLists.txt" -exec dirname {} \; | head -n 1)
+            if [ -n "$CMAKEDIR" ] && [ "$CMAKEDIR" != "." ]; then
+              echo "Moving project files from $CMAKEDIR to root"
+              shopt -s dotglob
+              mv "$CMAKEDIR"/* .
             fi
           fi
+          echo "=== Root directory structure ==="
           ls -la
 
       - name: Configure CMake
