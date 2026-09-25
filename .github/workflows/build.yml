@@ -1,33 +1,54 @@
-name: Build JUCE VST3 Plugin
+name: Build VST3 Plugin
 
 on:
   push:
-    branches: [ "main", "master" ]
-  pull_request:
-    branches: [ "main", "master" ]
+  workflow_dispatch:
 
 jobs:
-  build-windows:
-    name: Build VST3 (Windows)
-    runs-on: windows-2022
-
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            label: Windows
+          - os: macos-14
+            label: macOS
+    runs-on: ${{ matrix.os }}
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
+      - uses: actions/checkout@v4
 
-      - name: Setup Ninja & CMake
-        uses: lukka/get-cmake@latest
+      - name: Locate project
+        shell: bash
+        run: |
+          if [ ! -f CMakeLists.txt ]; then
+            SUBDIR=$(find . -maxdepth 2 -name "CMakeLists.txt" -not -path "./CMakeLists.txt" | head -n 1 | cut -d'/' -f2)
+            if [ -n "$SUBDIR" ]; then
+              echo "Moving files from subfolder: $SUBDIR"
+              shopt -s dotglob; mv "$SUBDIR"/* .;
+            fi
+          fi
+          ls -la
 
       - name: Configure CMake
-        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" == "macOS" ]; then
+            cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"
+          else
+            cmake -B build
+          fi
 
-      - name: Build VST3
-        run: cmake --build build --config Release --parallel
+      - name: Build Plugin
+        run: cmake --build build --config Release --parallel 4
 
-      - name: Upload VST3 Artifact
+      - name: Upload Artefacts
         uses: actions/upload-artifact@v4
         with:
-          name: VST3-Plugin-Windows
-          path: build/**/*.vst3
+          name: Plugin-${{ matrix.label }}
+          path: |
+            build/*_artefacts/Release/VST3
+            build/*_artefacts/Release/AU
+            build/*_artefacts/Release/Standalone
+            build/**/*.vst3
+          if-no-files-found: warn
