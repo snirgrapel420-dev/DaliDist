@@ -17,11 +17,13 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
-      - name: Locate project files
+      - name: Locate and inspect project structure
         shell: bash
         run: |
-          # אם CMakeLists.txt לא בתיקייה הראשית, חפש איפה הוא נמצא והעבר את התוכן של התיקייה ההיא למעלה
+          # אם CMakeLists.txt לא בתיקייה הראשית, מעבירים את הקבצים למעלה
           if [ ! -f CMakeLists.txt ]; then
             CMAKEDIR=$(find . -maxdepth 3 -name "CMakeLists.txt" -exec dirname {} \; | head -n 1)
             if [ -n "$CMAKEDIR" ] && [ "$CMAKEDIR" != "." ]; then
@@ -30,8 +32,10 @@ jobs:
               mv "$CMAKEDIR"/* .
             fi
           fi
-          echo "=== Root directory structure ==="
-          ls -la
+
+          echo "=================== ALL FILES IN REPO ==================="
+          find . -maxdepth 3 -not -path '*/.*'
+          echo "========================================================"
 
       - name: Configure CMake
         shell: bash
