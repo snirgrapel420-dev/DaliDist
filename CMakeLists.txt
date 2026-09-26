@@ -30,8 +30,10 @@ juce_add_plugin(DaliDist
     AU_MAIN_TYPE                kAudioUnitType_Effect)
 
 target_sources(DaliDist PRIVATE
-    Source/PluginProcessor.cpp)
-
+   Source/PluginProcessor.cpp
+    Source/PluginProcessor.h
+    Source/PluginEditor.cpp
+    Source/PluginEditor.h)
 target_include_directories(DaliDist PRIVATE Source)
 
 target_compile_definitions(DaliDist PUBLIC
