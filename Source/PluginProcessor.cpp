@@ -301,6 +301,9 @@ void DaliDistAudioProcessor::processBlockBypassed (juce::AudioBuffer<float>& buf
 //==============================================================================
 juce::AudioProcessorEditor* DaliDistAudioProcessor::createEditor()
 {
+    return new DaliDistAudioProcessorEditor (*this);
+}
+{
     // Temporary: generic editor until the Dali Audio neon UI is built from the family screenshot
     return new juce::GenericAudioProcessorEditor (*this);
 }
